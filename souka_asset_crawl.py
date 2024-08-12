@@ -27,13 +27,12 @@ def parse_meta(html_elements):
         label = label_elem.text.strip()
         content = ''
 
-        if label == '番号':
-            button = item.find('button')
+        content_div = item.find('div', class_='el-form-item__content')
+        if content_div:
+            button = content_div.find('button')
             if button:
                 content = button.get('data-clipboard-text', '').strip()
-        else:
-            content_div = item.find('div', class_='el-form-item__content')
-            if content_div:
+            else:
                 spans = content_div.find_all('span')
                 content = ' '.join(span.text.strip().replace(' ', '') for span in spans)
 
@@ -87,12 +86,9 @@ def fetch(asset_id, chrome_driver):
         meta_data['magnet'] = magnet_links
 
         save_json(meta_data, file_name)
-
-    except NoSuchElementException as e:
-
-        print(f"can not found download info, {asset_id}")
-    finally:
         print(f"finish to save: {asset_id}")
+    except NoSuchElementException as e:
+        print(f"can not found download info, {asset_id}")
 
 
 def fetch_mov_details(chrome_driver):
