@@ -1,16 +1,15 @@
 import json
 import os
 import os.path
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 
-from selenium import webdriver
 from selenium.common import NoSuchElementException
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 
-from utils import save_json, exists
+from utils import save_json, exists, create_chrome_driver
 
 json_folder_path = 'home_/'
 json_details_path = 'home_/asset'
@@ -112,9 +111,35 @@ def fetch_mov_details(chrome_driver):
         date -= delta
 
 
+def fetch_mov_details_for_date(date_str):
+    json_filename = os.path.join(json_folder_path, f'{date_str}.json')
+    with open(json_filename, 'r') as json_file:
+        json_data = json.load(json_file)
+        driver = create_chrome_driver()
+        for asset in json_data:
+            asset_id = asset['link']
+            print(f"assetId: {asset_id}")
+            try:
+                fetch(asset["link"], driver)
+            except Exception:
+                print(f"asset_id: {asset_id}, fetch error")
+        driver.quit()
+
+
+def main():
+    start_date = datetime(2024, 1, 2)
+    end_date = datetime(2024, 8, 12)
+    delta = timedelta(days=1)
+
+    date_list = []
+    date = end_date
+    while date >= start_date:
+        date_list.append(date.strftime('%Y%m%d'))
+        date -= delta
+
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        executor.map(fetch_mov_details_for_date, date_list)
+
+
 if __name__ == "__main__":
-    # Initialize the WebDriver
-    service = Service('native/chromedriver.exe')
-    driver = webdriver.Chrome(service=service)
-    fetch_mov_details(driver)
-    driver.quit()
+    main()
