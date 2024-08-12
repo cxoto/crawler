@@ -1,22 +1,11 @@
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
 
-from selenium.webdriver import ActionChains
-from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 import os
-import re
-import json
 import urllib
 
-import requests
-import csv
-import time
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from firecrawl import FirecrawlApp
-from utils import exists, download_image, save_json
+from utils import exists, download_image, save_json, create_chrome_driver
 
 # 基础路径配置
 base_image_path = 'home_/img/'
@@ -122,11 +111,8 @@ if __name__ == "__main__":
     start_date = datetime(2023, 1, 1)
     end_date = datetime(2023, 12, 31)
     delta = timedelta(days=1)
-
     date = start_date
-    all_links = []
-    service = Service('native/chromedriver.exe')
-    driver = webdriver.Chrome(service=service)
+    driver = create_chrome_driver()
     while date <= end_date:
         main(date, driver)
         date += delta
