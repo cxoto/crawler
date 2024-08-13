@@ -9,7 +9,7 @@ from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 
-from utils import save_json, exists, create_chrome_driver
+from utils import save_json, exists, create_chrome_driver, save_links_to_csv, read_from_csv
 
 json_folder_path = 'home_/'
 json_details_path = 'home_/asset'
@@ -116,6 +116,7 @@ def fetch_mov_details_for_date(date_str):
     with open(json_filename, 'r') as json_file:
         json_data = json.load(json_file)
         driver = create_chrome_driver()
+        error_links = []
         for asset in json_data:
             asset_id = asset['link']
             print(f"assetId: {asset_id}")
@@ -123,21 +124,24 @@ def fetch_mov_details_for_date(date_str):
                 fetch(asset["link"], driver)
             except Exception:
                 print(f"asset_id: {asset_id}, fetch error")
+                error_links.append(asset_id)
+        if len(error_links) != 0:
+            save_links_to_csv(error_links, "mov_fetch_error.csv")
         driver.quit()
 
 
 def main():
-    start_date = datetime(2024, 1, 2)
+    start_date = datetime(2020, 1, 1)
     end_date = datetime(2024, 8, 12)
     delta = timedelta(days=1)
 
     date_list = []
-    date = end_date
-    while date >= start_date:
+    date = start_date
+    while date <= end_date:
         date_list.append(date.strftime('%Y%m%d'))
-        date -= delta
+        date += delta
 
-    with ThreadPoolExecutor(max_workers=1) as executor:
+    with ThreadPoolExecutor(max_workers=10) as executor:
         executor.map(fetch_mov_details_for_date, date_list)
 
 
