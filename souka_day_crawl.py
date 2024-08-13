@@ -1,4 +1,3 @@
-
 from bs4 import BeautifulSoup
 import os
 import urllib
@@ -13,7 +12,7 @@ base_csv_path = 'home_/mov/'
 json_folder_path = 'home_/'
 
 # 最大线程数
-MAX_THREADS = 5
+MAX_THREADS = 10
 
 
 # 生成图片保存路径
@@ -52,8 +51,6 @@ def download_images(image_urls):
 
 
 def main(date_, driver):
-    # Initialize the WebDriver
-
     data = []
     date_str = date_.strftime('%Y%m%d')
     try:
@@ -78,6 +75,8 @@ def main(date_, driver):
             link = asset.find('a').get('href')
             if image_url:
                 # 收集图片 URL
+                if not image_url.startswith("http"):
+                    image_url = f"https:{image_url}"
                 if 'ps.jpg' in image_url:
                     pl_image_url = image_url.replace('ps.jpg', 'pl.jpg')
                     image_urls.extend([image_url, pl_image_url])
@@ -108,8 +107,8 @@ def main(date_, driver):
 
 
 if __name__ == "__main__":
-    start_date = datetime(2023, 1, 1)
-    end_date = datetime(2023, 12, 31)
+    start_date = datetime(2016, 10, 15)
+    end_date = datetime(2024, 8, 13)
     delta = timedelta(days=1)
     date = start_date
     driver = create_chrome_driver()
