@@ -1,3 +1,5 @@
+from time import sleep
+
 from bs4 import BeautifulSoup
 import os
 import urllib
@@ -10,7 +12,9 @@ from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.edge.options import Options
 
-from utils import exists, download_image, save_json, create_chrome_driver, create_edge_driver
+from utils import exists, download_image, save_json, create_chrome_driver, create_edge_driver, read_from_csv, \
+    save_arr_to_csv
+from wait_page_load import wait_page_load
 
 # 基础路径配置
 base_image_path = 'home_/img/'
@@ -56,7 +60,8 @@ def download_images(image_urls):
         return results
 
 
-def main(sp_no_first, c_driver):
+def main(sp_no_first):
+    c_driver = create_chrome_driver()
     data = []
     try:
         print("start query: " + sp_no_first)
@@ -67,36 +72,42 @@ def main(sp_no_first, c_driver):
         url = os.getenv("URL")
         c_driver.get(f'{url}{sp_no_first}')
 
-        click_downloadable_span(c_driver)
+        # click_downloadable_span(c_driver)
 
-        soup = poll_click_(c_driver)
+        soup = BeautifulSoup(c_driver.page_source, 'html.parser')  # poll_click_(c_driver)
         fetch_mov_detail(data, soup)
         page_numbers = soup.find_all('li', class_='number')
+        active_page = int(soup.find('li', class_='number active').text)
         max_page_size = len(page_numbers)
-        while True:
-            for page in page_numbers:
-                is_active_page = len(page.get('class')) == 2
-                page_number = int(page.text.strip())
-                if is_active_page and page_number == max_page_size:
-                    break
-                if is_active_page:
-                    click_ = driver.find_elements(By.CLASS_NAME, "number")[page_number]
-                    ActionChains(driver).click(click_).perform()
-                    content = c_driver.page_source
-                    soup = BeautifulSoup(content, 'html.parser')
-                    fetch_mov_detail(data, soup)
-        print(data)
-        save_json(data, json_filename)
-        # Print the output
+        while active_page < max_page_size:
+            soup = click_to_next_page(active_page, c_driver)
+            while not (active_page + 1 == int(
+                    soup.find('li', class_='number active').text)) and active_page < max_page_size:
+                soup = click_to_next_page(active_page, c_driver)
+            active_page += 1
+            sleep(3)
+            soup = BeautifulSoup(c_driver.page_source, 'html.parser')
+            fetch_mov_detail(data, soup)
+        if len(data) < 5:
+            save_arr_to_csv(data, "temp.json")
+        else:
+            save_json(data, json_filename)
         print("finish: " + sp_no_first)
     except Exception as e:
-        print(f"failed to query: {sp_no_first}")
+        print(f"failed to query: {sp_no_first}, error: {e}")
+    c_driver.quit()
+
+
+def click_to_next_page(active_page, c_driver):
+    click_ = c_driver.find_elements(By.CLASS_NAME, "number")[active_page]
+    ActionChains(c_driver).click(click_).perform()
+    soup = BeautifulSoup(c_driver.page_source, 'html.parser')
+    return soup
 
 
 def poll_click_(c_driver):
     while True:
-        content = c_driver.page_source
-        soup = BeautifulSoup(content, 'html.parser')
+        soup = BeautifulSoup(c_driver.page_source, 'html.parser')
         find = soup.find('span', class_='el-switch__label--right')
         if len(find.get("class")) == 3:
             break
@@ -118,19 +129,17 @@ def fetch_mov_detail(data, soup):
             "sp_no": sp_no,
             "sp_name": sp_name,
             "sp_time": sp_time,
-            "image_url": image_url
+            "image_url": image_url,
+            "downloadable": asset.find('i', class_='fa fa-download') is not None
         })
 
 
 def click_downloadable_span(c_driver):
-    switch_to_downloadable = driver.find_element(By.CLASS_NAME, "el-switch__label--right")
+    switch_to_downloadable = c_driver.find_element(By.CLASS_NAME, "el-switch__label--right")
     ActionChains(c_driver).click(switch_to_downloadable).perform()
 
 
 if __name__ == "__main__":
-    no = ["START"]
-    driver = create_chrome_driver()
-    while len(no) > 0:
-        main(no.pop(), driver)
-
-    driver.quit()
+    sp_no_arr = read_from_csv('sp_no.csv')
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        executor.map(main, sp_no_arr)
