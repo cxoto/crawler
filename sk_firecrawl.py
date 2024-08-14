@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from firecrawl import FirecrawlApp
 
-from utils import save_json, download_image, save_links_to_csv
+from utils import save_json, download_image, save_arr_to_csv
 
 # 基础路径配置
 base_image_path = 'home/img/'
@@ -119,6 +119,6 @@ while date <= end_date:
 
 # 保存所有链接到 CSV 文件
 csv_filename = os.path.join(base_csv_path, 'list.csv')
-save_links_to_csv(all_links, csv_filename)
+save_arr_to_csv(all_links, csv_filename)
 
 print("数据抓取和文件保存完成。")

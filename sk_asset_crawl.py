@@ -9,7 +9,7 @@ from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 
-from utils import save_json, exists, create_chrome_driver, save_links_to_csv, read_from_csv
+from utils import save_json, exists, create_chrome_driver, save_arr_to_csv, read_from_csv
 
 json_folder_path = 'home_/'
 json_details_path = 'home_/asset'
@@ -119,20 +119,19 @@ def fetch_mov_details_for_date(date_str):
         error_links = []
         for asset in json_data:
             asset_id = asset['link']
-            print(f"assetId: {asset_id}")
             try:
-                fetch(asset["link"], driver)
+                fetch(asset_id, driver)
             except Exception:
                 print(f"asset_id: {asset_id}, fetch error")
                 error_links.append(asset_id)
         if len(error_links) != 0:
-            save_links_to_csv(error_links, "mov_fetch_error.csv")
+            save_arr_to_csv(error_links, "mov_fetch_error.csv")
         driver.quit()
 
 
 def main():
-    start_date = datetime(2020, 1, 1)
-    end_date = datetime(2024, 8, 12)
+    start_date = datetime(2016, 10, 15)
+    end_date = datetime(2024, 8, 14)
     delta = timedelta(days=1)
 
     date_list = []
@@ -141,7 +140,7 @@ def main():
         date_list.append(date.strftime('%Y%m%d'))
         date += delta
 
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=1) as executor:
         executor.map(fetch_mov_details_for_date, date_list)
 
 

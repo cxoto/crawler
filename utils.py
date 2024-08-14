@@ -7,6 +7,7 @@ import selenium
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.options import PageLoadStrategy
 
 
 def save_json(data, filename):
@@ -14,7 +15,7 @@ def save_json(data, filename):
         json.dump(data, f, indent=4, ensure_ascii=False)
 
 
-def save_links_to_csv(links, filename):
+def save_arr_to_csv(links, filename):
     # append
     with open(filename, 'a+', newline='', encoding='utf-8') as csvfile:
         writer = csv.writer(csvfile)
@@ -55,10 +56,10 @@ def create_chrome_driver():
     chrome_options = Options()
     # chrome_options.add_argument('--headless')  # Run Chrome in headless mode
     chrome_options.add_argument('--disable-images')  # Optional: Disable image loading
-    chrome_options.set_capability('pageLoadStrategy', 'eager')  # Eager page load strategy
+    chrome_options.set_capability('pageLoadStrategy', PageLoadStrategy.eager)  # Eager page load strategy
     service = Service('native/chromedriver.exe')
     driver = webdriver.Chrome(service=service, options=chrome_options)
-    driver.set_page_load_timeout(30)  # Set page load timeout to 30 seconds
+    driver.set_page_load_timeout(40)  # Set page load timeout to 30 seconds
     return driver
 
 

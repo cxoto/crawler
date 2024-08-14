@@ -107,8 +107,8 @@ def main(date_, driver):
 
 
 if __name__ == "__main__":
-    start_date = datetime(2016, 10, 15)
-    end_date = datetime(2024, 8, 13)
+    start_date = datetime(2024, 8, 13)
+    end_date = datetime(2024, 8, 14)
     delta = timedelta(days=1)
     date = start_date
     driver = create_chrome_driver()
